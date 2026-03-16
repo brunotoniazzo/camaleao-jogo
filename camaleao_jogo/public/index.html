@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Camaleão</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦎</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- ══ LANG PICKER ══ -->
+    <div class="lang-picker">
+        <button class="lang-btn" id="lang-btn" onclick="toggleLangMenu()">
+            <span id="lang-flag">🇧🇷</span>
+            <span>▾</span>
+        </button>
+        <div class="lang-dropdown" id="lang-menu">
+            <button class="lang-opt" onclick="setLang('pt')">🇧🇷 Português</button>
+            <button class="lang-opt" onclick="setLang('en')">🇬🇧 English</button>
+            <button class="lang-opt" onclick="setLang('es')">🇪🇸 Español</button>
+        </div>
+    </div>
+
+    <!-- ══ HOME ══ -->
+    <div id="s-home" class="screen active">
+        <div class="card">
+            <span class="logo">🦎 Camaleão</span>
+            <p class="logo-sub" id="logo-sub">Jogo de dedução em grupo</p>
+
+            <div class="inp-group">
+                <label class="inp-label" id="lbl-name" for="inp-name">Seu nome</label>
+                <input id="inp-name" class="inp" placeholder="Como te chamam?" maxlength="16" autocomplete="off">
+            </div>
+
+            <div class="inp-group">
+                <label class="inp-label" id="lbl-avatar">Escolha seu avatar</label>
+                <div class="emoji-grid" id="emoji-grid"></div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" id="tab-create-btn" onclick="switchTab('create')">Criar Sala</button>
+                <button class="tab" id="tab-join-btn" onclick="switchTab('join')">Entrar na Sala</button>
+            </div>
+
+            <div id="tab-create">
+                <button class="btn btn-shimmer" id="btn-create-new" onclick="createRoom()">Criar Nova Sala</button>
+            </div>
+            <div id="tab-join" style="display:none">
+                <div class="inp-group">
+                    <label class="inp-label" id="lbl-code" for="inp-code">Código da sala</label>
+                    <input id="inp-code" class="inp" placeholder="XXXX" maxlength="4"
+                        style="text-transform:uppercase;letter-spacing:.2em;font-size:1.1rem;font-family:var(--font-game)">
+                </div>
+                <button class="btn btn-primary" id="btn-join" onclick="joinRoom()">Entrar na Sala</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ LOBBY ══ -->
+    <div id="s-lobby" class="screen">
+        <div class="card">
+            <div class="room-code-display">
+                <div class="room-code-label" id="lobby-code-lbl">Código da sala</div>
+                <div class="room-code-value" id="lobby-code" onclick="copyCode()" title="Copiar"></div>
+                <div class="room-code-hint" id="lobby-code-hint">Toque para copiar • compartilhe com os amigos</div>
+            </div>
+            <hr class="sep">
+            <div class="section-head"><span id="lobby-players-title">Jogadores</span> (<span
+                    id="lobby-count">0</span>/<span id="lobby-max">10</span>)</div>
+            <div id="lobby-players" class="player-list"></div>
+
+            <!-- Settings (host only) -->
+            <div id="lobby-settings" style="display:none">
+                <hr class="sep">
+                <div class="settings-toggle" id="settings-toggle" onclick="toggleSettings()">
+                    <span id="cfg-title">⚙️ Configurações da Sala</span>
+                    <span class="arrow">▾</span>
+                </div>
+                <div class="settings-body" id="settings-body">
+                    <!-- Timers -->
+                    <div class="section-head" id="cfg-time-title" style="margin-top:.4rem">⏱️ Tempos (segundos)</div>
+                    <div class="setting-row">
+                        <div class="setting-label"><span id="cfg-lbl-hint">Rodada de dica</span> <small>10 – 120
+                                s</small></div>
+                        <input id="cfg-hint" class="setting-val inp" type="number" min="10" max="120" value="30"
+                            onchange="sendConfig()">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-label"><span id="cfg-lbl-cont">Continuar ou Votar</span> <small>20 – 180
+                                s</small></div>
+                        <input id="cfg-cont" class="setting-val inp" type="number" min="20" max="180" value="60"
+                            onchange="sendConfig()">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-label"><span id="cfg-lbl-elim">Eleger o Camaleão</span> <small>30 – 300
+                                s</small></div>
+                        <input id="cfg-elim" class="setting-val inp" type="number" min="30" max="300" value="120"
+                            onchange="sendConfig()">
+                    </div>
+                    <!-- Max players -->
+                    <div class="setting-row">
+                        <div class="setting-label"><span id="cfg-lbl-max">👥 Máx. jogadores</span> <small>3 – 10</small>
+                        </div>
+                        <input id="cfg-max" class="setting-val inp" type="number" min="3" max="10" value="10"
+                            onchange="sendConfig()">
+                    </div>
+
+                    <!-- Word Language -->
+                    <div class="section-head" id="cfg-lang-title" style="margin-top:1rem">🌐 Idioma das Palavras</div>
+                    <div class="end-mode-row" style="margin-bottom:.9rem">
+                        <button class="end-mode-btn" id="em-lang-en" onclick="setWordLang('en')">🇬🇧 EN</button>
+                        <button class="end-mode-btn" id="em-lang-pt" onclick="setWordLang('pt')">🇧🇷 PT</button>
+                        <button class="end-mode-btn" id="em-lang-es" onclick="setWordLang('es')">🇪🇸 ES</button>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="section-head" id="cfg-cats-title">🎲 Categorias ativas</div>
+                    <div class="cat-grid-cfg" id="cat-grid-cfg"></div>
+                    <!-- Game end -->
+                    <div class="section-head" id="cfg-end-title">🏆 Encerramento da partida</div>
+                    <div class="end-mode-row">
+                        <button class="end-mode-btn on" id="em-rounds" onclick="setEndMode('rounds')">Nº de
+                            partidas</button>
+                        <button class="end-mode-btn" id="em-points" onclick="setEndMode('points')">Pontos alvo</button>
+                    </div>
+                    <div class="setting-row" id="cfg-rounds-row">
+                        <div class="setting-label"><span id="cfg-lbl-rounds">Partidas a jogar</span> <small>1 –
+                                20</small></div>
+                        <input id="cfg-rounds" class="setting-val inp" type="number" min="1" max="20" value="3"
+                            onchange="sendConfig()">
+                    </div>
+                    <div class="setting-row" id="cfg-points-row" style="display:none">
+                        <div class="setting-label"><span id="cfg-lbl-pts">Pontuação alvo</span> <small>1 – 20</small>
+                        </div>
+                        <input id="cfg-pts" class="setting-val inp" type="number" min="1" max="20" value="5"
+                            onchange="sendConfig()">
+                    </div>
+
+                </div>
+            </div>
+
+            <hr class="sep">
+            <div id="lobby-match-progress" style="display:none" class="match-progress"></div>
+            <div id="lobby-host-area" style="display:none">
+                <button class="btn btn-shimmer btn-pulse" id="btn-start" onclick="startGame()">Iniciar Jogo</button>
+                <p style="text-align:center;font-size:.72rem;color:var(--txt-dim);margin-top:.6rem">Mínimo 3 jogadores
+                </p>
+            </div>
+            <div id="lobby-wait-area" style="display:none">
+                <p style="text-align:center;color:var(--txt-muted);font-family:var(--font-game);font-size:.9rem">
+                    Aguardando o host iniciar…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ WORD REVEAL ══ -->
+    <div id="s-word" class="screen">
+        <div class="card word-card">
+            <div class="word-role" id="word-role"></div>
+            <div class="timer-bar-wrap">
+                <div class="timer-bar" id="word-timer-bar"></div>
+            </div>
+            <div class="timer-text" id="word-timer-txt"></div>
+            <div style="margin:1.5rem 0">
+                <p id="txt-your-word" class="word-role" style="font-size:.65rem">sua palavra</p>
+                <div class="word-value" id="word-value"></div>
+                <p class="word-cam-warn" id="word-cam-warn" style="display:none">Você é o 🦎 Camaleão! Finja que sabe a
+                    palavra geral!</p>
+            </div>
+            <p id="word-footer" style="font-size:.75rem;color:var(--txt-dim);text-align:center">Não mostre para ninguém.
+                O jogo começa em breve.</p>
+        </div>
+    </div>
+
+    <!-- ══ HINT ROUND ══ -->
+    <div id="s-hints" class="screen" style="justify-content:flex-start;padding-top:1.5rem">
+        <div class="hints-layout">
+            <!-- Sidebar -->
+            <div class="hints-sidebar">
+                <div class="my-word-chip">
+                    <div id="lbl-hint-my-word" class="mwl">Sua palavra</div>
+                    <div class="mwv" id="hint-my-word">—</div>
+                </div>
+                <div id="sidebar-title" class="sidebar-title">Jogadores</div>
+                <div id="hint-players" class="player-list" style="margin:0"></div>
+            </div>
+            <!-- Main -->
+            <div class="hints-main">
+                <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.8rem;flex-wrap:wrap">
+                    <span class="round-chip" id="hint-round-chip">Rodada 1</span>
+                    <div class="timer-bar-wrap" style="flex:1;margin:0">
+                        <div class="timer-bar" id="hint-timer-bar"></div>
+                    </div>
+                    <div class="timer-text" id="hint-timer-txt" style="font-size:.9rem"></div>
+                </div>
+                <div class="hints-box" id="hints-list"></div>
+                <div id="turn-area"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ VOTE CONTINUE ══ -->
+    <div id="s-vote-continue" class="screen">
+        <div class="card">
+            <div id="vc-title" class="vote-title">🗳️ Hora de decidir!</div>
+            <div id="vc-sub" class="vote-sub">A maioria define o que acontece a seguir.</div>
+            <div class="timer-bar-wrap">
+                <div class="timer-bar" id="vc-timer-bar"></div>
+            </div>
+            <div class="timer-text" id="vc-timer-txt" style="margin-bottom:1rem"></div>
+            <div id="vc-btns" class="vote-btns">
+                <button id="btn-cont" class="btn btn-ghost btn-half" onclick="voteContinue('continue')">⏭
+                    Continuar</button>
+                <button id="btn-vote" class="btn btn-danger btn-half" onclick="voteContinue('vote')">🎯
+                    Votar</button>
+            </div>
+            <div id="vc-voted-msg"
+                style="display:none;text-align:center;color:var(--clr-right-l);font-family:var(--font-game);padding:1rem">
+                Voto registrado!</div>
+            <hr class="sep">
+            <div class="voted-indicator" id="vc-voted-list">Aguardando votos…</div>
+        </div>
+    </div>
+
+    <!-- ══ VOTE CHAMELEON ══ -->
+    <div id="s-vote-chameleon" class="screen">
+        <div class="card wide-card">
+            <div id="vch-title" class="vote-title">🦎 Quem é o Camaleão?</div>
+            <div id="vch-sub" class="vote-sub">Vote em quem você suspeita. Você não pode votar em si mesmo.</div>
+            <div class="timer-bar-wrap">
+                <div class="timer-bar" id="vch-timer-bar"></div>
+            </div>
+            <div class="timer-text" id="vch-timer-txt" style="margin-bottom:1rem"></div>
+            <div class="vote-grid" id="vote-grid"></div>
+            <div id="vch-confirm" style="display:none;margin-top:1rem">
+                <button class="btn btn-danger" id="vch-confirm-btn" onclick="confirmVoteChameleon()">Confirmar
+                    voto</button>
+            </div>
+            <div id="vch-voted-msg"
+                style="display:none;text-align:center;color:var(--clr-right-l);font-family:var(--font-game);padding:1rem">
+                Voto registrado! Aguardando os outros…</div>
+        </div>
+    </div>
+
+    <!-- ══ RESULTS ══ -->
+    <div id="s-results" class="screen">
+        <div class="card" style="max-width:520px">
+
+            <!-- ── Reveal desta rodada ── -->
+            <div class="results-reveal">
+                <span class="result-icon" id="res-icon"></span>
+                <div class="result-title" id="res-title"></div>
+                <div class="result-sub" id="res-sub"></div>
+                <div class="word-reveal-box">
+                    <div class="wrb">
+                        <div id="lbl-res-normal" class="wrb-label">Palavra dos jogadores</div>
+                        <div class="wrb-word normal" id="res-normal-word"></div>
+                    </div>
+                    <div class="wrb">
+                        <div id="lbl-res-cam" class="wrb-label">Palavra do Camaleão</div>
+                        <div class="wrb-word cam" id="res-cam-word"></div>
+                    </div>
+                </div>
+            </div>
+            <hr class="sep">
+
+            <!-- ── Countdown para próxima rodada (mid-match) ── -->
+            <div id="res-next-round-bar" class="next-round-bar" style="display:none">
+                <div id="res-next-lbl" class="next-round-label">🏆 Próxima rodada em...</div>
+                <div class="next-round-countdown" id="res-countdown">8</div>
+            </div>
+
+            <!-- ── Pódio final (matchOver) ── -->
+            <div id="res-podium-section" style="display:none">
+                <div id="res-final-lbl"
+                    style="text-align:center;font-family:var(--font-game);font-size:1rem;color:var(--clr-place-l);margin-bottom:.5rem">
+                    🏆 Resultado Final!
+                </div>
+                <div class="podium-wrap" id="res-podium"></div>
+                <div class="other-scores" id="res-others"></div>
+            </div>
+
+            <!-- ── Placar corrente (sempre visível) ── -->
+            <div class="section-head" id="res-score-label">Placar</div>
+            <table class="scores-table">
+                <thead>
+                    <tr>
+                        <th id="res-th-player">Jogador</th>
+                        <th id="res-th-pts">Pontos</th>
+                    </tr>
+                </thead>
+                <tbody id="res-scores"></tbody>
+            </table>
+            <hr class="sep">
+
+            <!-- ── Botões do host ── -->
+            <div id="res-host-area" style="display:none">
+                <div id="res-new-match">
+                    <button id="btn-new-match" class="btn btn-success" onclick="newMatch()">Nova Partida (Zerar
+                        Pontos)</button>
+                </div>
+            </div>
+            <div id="res-wait-area" style="display:none">
+                <p id="res-wait-msg"
+                    style="text-align:center;color:var(--txt-muted);font-family:var(--font-game);font-size:.88rem">
+                    Aguardando o host…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TOAST ══ -->
+    <div id="toast"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="locales/translations.js"></script>
+    <script>
+        // ── i18n Controller ──────────────────────────────────────────
+        let currentLang = localStorage.getItem('lang') || 'pt';
+        function t(key) { return STRINGS[currentLang][key] || key; }
+
+        function toggleLangMenu() {
+            document.getElementById('lang-menu').classList.toggle('open');
+        }
+
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            document.getElementById('lang-menu').classList.remove('open');
+            applyTranslations();
+            if (state) render(state);
+        }
+
+        function applyTranslations() {
+            document.getElementById('lang-flag').textContent = STRINGS[currentLang].flag;
+            document.querySelectorAll('.lang-opt').forEach(el => {
+                el.classList.toggle('active', el.textContent.includes(STRINGS[currentLang].flag));
+            });
+
+            for (const [id, key] of Object.entries(STATIC_TEXT_MAPPING)) {
+                const el = document.getElementById(id);
+                if (el) el.textContent = t(key);
+            }
+
+            document.getElementById('inp-name').placeholder = t('ph-name');
+            document.getElementById('lobby-players-title').textContent = t('lobby-players');
+            document.getElementById('btn-start').innerHTML = t('btn-start');
+        }
+
+        window.onload = applyTranslations;
+
+        // ── State ─────────────────────────────────────────────────
+        const socket = io();
+        let myId = null, myWord = null, state = null;
+        let selectedEmoji = '🐸';
+        let selectedVoteChamTarget = null;
+        let timerInterval = null;
+
+        // ── Emojis ────────────────────────────────────────────────
+        const EMOJIS = ['🐸', '🦊', '🐱', '🐶', '🦁', '🐻', '🦉', '🐧',
+            '🐙', '🦋', '🦈', '🦆', '🐝', '🐢', '🦕', '🐼',
+            '🦀', '🐳', '🦜', '🐠', '🦔', '🐨', '🐯', '🦅'];
+
+        (function buildEmojiGrid() {
+            const g = document.getElementById('emoji-grid');
+            EMOJIS.forEach(e => {
+                const b = document.createElement('button');
+                b.className = 'emoji-btn' + (e === selectedEmoji ? ' sel' : '');
+                b.textContent = e;
+                b.onclick = () => {
+                    document.querySelectorAll('.emoji-btn').forEach(x => x.classList.remove('sel'));
+                    b.classList.add('sel');
+                    selectedEmoji = e;
+                };
+                g.appendChild(b);
+            });
+        })();
+
+        // ── Tab switch ────────────────────────────────────────────
+        function switchTab(t) {
+            document.getElementById('tab-create').style.display = t === 'create' ? '' : 'none';
+            document.getElementById('tab-join').style.display = t === 'join' ? '' : 'none';
+            document.getElementById('tab-create-btn').classList.toggle('active', t === 'create');
+            document.getElementById('tab-join-btn').classList.toggle('active', t === 'join');
+        }
+
+        // ── Screens ───────────────────────────────────────────────
+        function show(id) {
+            document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+            const el = document.getElementById(id);
+            el.style.display = 'flex'; el.classList.add('active');
+        }
+
+        // ── Socket events ─────────────────────────────────────────
+        socket.on('state', s => {
+            myId = s.myId;
+            myWord = s.myWord;
+            state = s;
+            render(s);
+        });
+
+        socket.on('err', msg => {
+            // translate specific server error messages if needed, or rely on client-side errors mostly
+            toast(msg, 'err');
+        });
+
+        // ── Actions ───────────────────────────────────────────────
+        function getProfile() {
+            const name = document.getElementById('inp-name').value.trim();
+            if (!name) { toast(t('err-name'), 'err'); return null; }
+            if (!selectedEmoji) { toast(t('err-avatar'), 'err'); return null; }
+            return { name, emoji: selectedEmoji };
+        }
+
+        function createRoom() {
+            const p = getProfile(); if (!p) return;
+            socket.emit('create-room', p);
+        }
+
+        function joinRoom() {
+            const p = getProfile(); if (!p) return;
+            const code = document.getElementById('inp-code').value.trim().toUpperCase();
+            if (code.length !== 4) { toast(t('err-code'), 'err'); return; }
+            socket.emit('join-room', { code, ...p });
+        }
+
+        function startGame() { socket.emit('start-game'); }
+
+        function copyCode() {
+            const c = document.getElementById('lobby-code').textContent;
+            navigator.clipboard.writeText(c).then(() => toast(t('msg-copied'), 'ok'));
+        }
+
+        function setWordLang(lang) {
+            socket.emit('set-config', { language: lang });
+        }
+
+        function voteContinue(vote) {
+            socket.emit('vote-continue', { vote });
+            document.getElementById('vc-btns').style.display = 'none';
+            document.getElementById('vc-voted-msg').style.display = '';
+        }
+
+        function confirmVoteChameleon() {
+            if (!selectedVoteChamTarget) return;
+            socket.emit('vote-chameleon', { targetId: selectedVoteChamTarget });
+            document.getElementById('vch-confirm').style.display = 'none';
+            document.getElementById('vch-voted-msg').style.display = '';
+            document.querySelectorAll('.vote-player-card').forEach(c => c.style.pointerEvents = 'none');
+        }
+
+        // ── Render ────────────────────────────────────────────────
+        function render(s) {
+            switch (s.status) {
+                case 'lobby': renderLobby(s); break;
+                case 'word_reveal': renderWordReveal(s); break;
+                case 'hint_round': renderHints(s); break;
+                case 'vote_continue': renderVoteContinue(s); break;
+                case 'vote_chameleon': renderVoteCham(s); break;
+                case 'results': renderResults(s); break;
+            }
+        }
+
+        // ── Lobby ─────────────────────────────────────────────────
+        function renderLobby(s) {
+            show('s-lobby');
+            const cfg = s.config || {};
+            const isHost = myId === s.hostId;
+            document.getElementById('lobby-code').textContent = s.code;
+            document.getElementById('lobby-count').textContent = s.players.length;
+            document.getElementById('lobby-max').textContent = cfg.maxPlayers || 10;
+            const list = document.getElementById('lobby-players');
+            list.innerHTML = '';
+            s.players.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'player-row' + (p.id === s.hostId ? ' host-row' : '');
+                div.innerHTML = `<span class="player-emoji">${p.emoji}</span>
+                  <span class="player-name">${esc(p.name)}</span>
+                  ${p.id === s.hostId ? '<span class="player-badge">Host</span>' : ''}`;
+                list.appendChild(div);
+            });
+
+            // Match progress
+            const mp = document.getElementById('lobby-match-progress');
+            if (s.gamesPlayed > 0) {
+                mp.style.display = '';
+                const endLabel = cfg.gameEndMode === 'points'
+                    ? `Alvo: ${cfg.targetScore} pt`
+                    : `Partida ${s.gamesPlayed} de ${cfg.maxRounds}`;
+                mp.innerHTML = `► ${endLabel}`;
+            } else { mp.style.display = 'none'; }
+
+            // Settings panel (host only)
+            document.getElementById('lobby-settings').style.display = isHost ? '' : 'none';
+            if (isHost && cfg.hintTime) {
+                setValIfUnfocused('cfg-hint', cfg.hintTime);
+                setValIfUnfocused('cfg-cont', cfg.voteContinueTime);
+                setValIfUnfocused('cfg-elim', cfg.voteEliminateTime);
+                setValIfUnfocused('cfg-max', cfg.maxPlayers);
+                setValIfUnfocused('cfg-rounds', cfg.maxRounds);
+                setValIfUnfocused('cfg-pts', cfg.targetScore);
+                // End-mode buttons
+                document.getElementById('em-rounds').classList.toggle('on', cfg.gameEndMode === 'rounds');
+                document.getElementById('em-points').classList.toggle('on', cfg.gameEndMode === 'points');
+
+                // Language buttons
+                document.getElementById('em-lang-en').classList.toggle('on', cfg.language === 'en');
+                document.getElementById('em-lang-pt').classList.toggle('on', cfg.language === 'pt');
+                document.getElementById('em-lang-es').classList.toggle('on', cfg.language === 'es');
+
+                document.getElementById('cfg-rounds-row').style.display = cfg.gameEndMode === 'rounds' ? '' : 'none';
+                document.getElementById('cfg-points-row').style.display = cfg.gameEndMode === 'points' ? '' : 'none';
+                // Category chips
+                buildCatChips(cfg.categories || []);
+            }
+
+            document.getElementById('lobby-host-area').style.display = isHost ? '' : 'none';
+            document.getElementById('lobby-wait-area').style.display = isHost ? 'none' : '';
+        }
+
+        function setValIfUnfocused(id, val) {
+            const el = document.getElementById(id);
+            if (el && document.activeElement !== el) el.value = val;
+        }
+
+        function buildCatChips(activeCats) {
+            const grid = document.getElementById('cat-grid-cfg');
+            if (!grid) return;
+            const meta = CATEGORIES_META[currentLang] || CATEGORIES_META['pt'];
+            // Only rebuild if needed
+            if (grid.childElementCount === meta.length) {
+                // Just update classes
+                grid.querySelectorAll('.cat-chip').forEach(chip => {
+                    chip.classList.toggle('on', activeCats.includes(chip.dataset.id));
+                });
+                return;
+            }
+            grid.innerHTML = '';
+            meta.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'cat-chip' + (activeCats.includes(cat.id) ? ' on' : '');
+                btn.dataset.id = cat.id;
+                btn.textContent = cat.label;
+                btn.onclick = () => {
+                    btn.classList.toggle('on');
+                    sendConfig();
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        function toggleSettings() {
+            const toggle = document.getElementById('settings-toggle');
+            const body = document.getElementById('settings-body');
+            toggle.classList.toggle('open');
+            body.classList.toggle('open');
+        }
+
+        function setEndMode(mode) {
+            document.getElementById('em-rounds').classList.toggle('on', mode === 'rounds');
+            document.getElementById('em-points').classList.toggle('on', mode === 'points');
+            document.getElementById('cfg-rounds-row').style.display = mode === 'rounds' ? '' : 'none';
+            document.getElementById('cfg-points-row').style.display = mode === 'points' ? '' : 'none';
+            sendConfig();
+        }
+
+        function setWordLang(lang) {
+            document.getElementById('em-lang-en').classList.toggle('on', lang === 'en');
+            document.getElementById('em-lang-pt').classList.toggle('on', lang === 'pt');
+            document.getElementById('em-lang-es').classList.toggle('on', lang === 'es');
+            sendConfig();
+        }
+
+        function sendConfig() {
+            const cats = [];
+            document.querySelectorAll('#cat-grid-cfg .cat-chip.on').forEach(c => cats.push(c.dataset.id));
+            const em = document.getElementById('em-rounds')?.classList.contains('on') ? 'rounds' : 'points';
+
+            let lang = 'pt';
+            if (document.getElementById('em-lang-en')?.classList.contains('on')) lang = 'en';
+            if (document.getElementById('em-lang-es')?.classList.contains('on')) lang = 'es';
+
+            socket.emit('set-config', {
+                language: lang,
+                hintTime: parseInt(document.getElementById('cfg-hint')?.value) || 30,
+                voteContinueTime: parseInt(document.getElementById('cfg-cont')?.value) || 60,
+                voteEliminateTime: parseInt(document.getElementById('cfg-elim')?.value) || 120,
+                maxPlayers: parseInt(document.getElementById('cfg-max')?.value) || 10,
+                categories: cats.length ? cats : undefined,
+                gameEndMode: em,
+                maxRounds: parseInt(document.getElementById('cfg-rounds')?.value) || 3,
+                targetScore: parseInt(document.getElementById('cfg-pts')?.value) || 5,
+            });
+        }
+
+        function returnToLobby() { socket.emit('return-to-lobby'); }
+        function newMatch() { socket.emit('new-match'); }
+
+
+        // ── Word Reveal ───────────────────────────────────────────
+        function renderWordReveal(s) {
+            show('s-word');
+            const isCam = myId === s.camId; // camId is null during reveal, fine
+            const amICam = myWord && s.players && (() => {
+                // We figure out if we're the chameleon by comparing word to pair later
+                // Actually server doesn't send camId during word_reveal, use indirect check
+                return false; // will be determined by word value mismatch visual cue below
+            })();
+            document.getElementById('word-role').textContent = '🦎 Camaleão — O Jogo';
+            document.getElementById('word-value').textContent = myWord || '?';
+            // We can't know if we're cam without camId (hidden), but server sends our unique word
+            document.getElementById('word-cam-warn').style.display = 'none';
+            startTimerBar('word-timer-bar', 'word-timer-txt', s.timerEnd, 12);
+        }
+
+        // ── Hints ─────────────────────────────────────────────────
+        function renderHints(s) {
+            show('s-hints');
+            document.getElementById('hint-my-word').textContent = myWord || '?';
+            document.getElementById('hint-round-chip').textContent = t('hint-round') + ' ' + s.round;
+            const hintSecs = s.config?.hintTime || 30;
+            startTimerBar('hint-timer-bar', 'hint-timer-txt', s.timerEnd, hintSecs);
+
+            // Sidebar players
+            const pl = document.getElementById('hint-players');
+            pl.innerHTML = '';
+            s.players.forEach(p => {
+                const isCur = s.turnOrder[s.currentTurn] === p.id;
+                const div = document.createElement('div');
+                div.className = 'player-row';
+                div.style.borderColor = isCur ? 'var(--primary)' : '';
+                const turnStr = window.currentLang === 'pt' ? 'vez' : 'turn'; // fallback translation for badge
+                div.innerHTML = `<span class="player-emoji">${p.emoji}</span>
+      <span class="player-name" style="font-size:.8rem">${esc(p.name)}</span>
+      ${isCur ? `<span class="player-badge">${turnStr}</span>` : ''}`;
+                pl.appendChild(div);
+            });
+
+            // Hints list
+            const hl = document.getElementById('hints-list');
+            hl.innerHTML = '';
+            let lastRound = 0;
+            s.hints.forEach(h => {
+                if (h.round !== lastRound) {
+                    lastRound = h.round;
+                    const sep = document.createElement('div');
+                    sep.className = 'hint-round-sep';
+                    sep.textContent = '— ' + t('hint-round') + ' ' + h.round + ' —';
+                    hl.appendChild(sep);
+                }
+                const div = document.createElement('div');
+                div.className = 'hint-item';
+                div.innerHTML = `<span class="hint-emoji">${h.emoji}</span>
+      <span class="hint-name">${esc(h.name)}</span>
+      <span class="hint-word">${esc(h.hint)}</span>`;
+                hl.appendChild(div);
+            });
+            hl.scrollTop = hl.scrollHeight;
+
+            // Turn area
+            const ta = document.getElementById('turn-area');
+            const curPlayerId = s.turnOrder[s.currentTurn];
+            const curPlayer = s.players.find(p => p.id === curPlayerId);
+            const isMyTurn = curPlayerId === myId;
+            // Has this player already submitted for this position?
+            const submitted = s.hints.some(h => h.playerId === curPlayerId && h.round === s.round);
+
+            if (isMyTurn && !submitted) {
+                const label = currentLang === 'pt' ? '⌚ É a sua vez! Digite uma palavra sobre a sua palavra' : (currentLang === 'en' ? '⌚ It\'s your turn! Type a word about your word' : '⌚ ¡Es tu turno! Escribe una palabra sobre tu palabra');
+                const btnStr = currentLang === 'pt' ? 'Enviar' : (currentLang === 'en' ? 'Send' : 'Enviar');
+                const phStr = currentLang === 'pt' ? 'Uma palavra…' : (currentLang === 'en' ? 'A word…' : 'Una palabra…');
+                ta.innerHTML = `<div class="turn-area">
+      <div class="turn-label">${label}</div>
+      <div class="hint-inp-row">
+        <input id="hint-inp" class="inp hint-inp" placeholder="${phStr}" maxlength="30" autocomplete="off">
+        <button class="btn btn-success btn-sm" onclick="sendHint()">${btnStr}</button>
+      </div>
+    </div>`;
+                const inp = document.getElementById('hint-inp');
+                inp.addEventListener('keydown', e => { if (e.key === 'Enter') sendHint(); });
+                inp.focus();
+            } else {
+                const cp = curPlayer || {};
+                const thinking = currentLang === 'pt' ? 'está pensando…' : (currentLang === 'en' ? 'is thinking…' : 'está pensando…');
+                ta.innerHTML = `<div class="waiting-turn">
+      <div class="current-turn-player"><span style="font-size:1.5rem">${cp.emoji || ''}</span><span>${esc(cp.name || '')}</span></div>
+      <span>${thinking}</span>
+    </div>`;
+            }
+        }
+
+        function sendHint() {
+            const inp = document.getElementById('hint-inp');
+            if (!inp) return;
+            const val = inp.value.trim();
+            if (!val) { toast('Digite uma palavra!', 'err'); return; }
+            if (/\s/.test(val)) { toast('Apenas UMA palavra, sem espaços.', 'err'); return; }
+            socket.emit('submit-hint', { hint: val });
+            inp.value = '';
+        }
+
+        // ── Vote Continue ─────────────────────────────────────────
+        function renderVoteContinue(s) {
+            show('s-vote-continue');
+            const contSecs = s.config?.voteContinueTime || 60;
+            startTimerBar('vc-timer-bar', 'vc-timer-txt', s.timerEnd, contSecs);
+            const myVote = s.players.find(p => p.id === myId)?.votedCont;
+            document.getElementById('vc-btns').style.display = myVote ? 'none' : '';
+            document.getElementById('vc-voted-msg').style.display = myVote ? '' : 'none';
+            const voted = s.players.filter(p => p.votedCont).length;
+
+            const voteStr = currentLang === 'en' ? 'voted' : (currentLang === 'es' ? 'votaron' : 'votaram');
+            document.getElementById('vc-voted-list').textContent = voted + ' ' + t('of') + ' ' + s.players.length + ' ' + voteStr;
+        }
+
+        // ── Vote Chameleon ────────────────────────────────────────
+        function renderVoteCham(s) {
+            show('s-vote-chameleon');
+            const elimSecs = s.config?.voteEliminateTime || 120;
+            startTimerBar('vch-timer-bar', 'vch-timer-txt', s.timerEnd, elimSecs);
+            const myVoted = s.players.find(p => p.id === myId)?.votedCham;
+            document.getElementById('vch-voted-msg').style.display = myVoted ? '' : 'none';
+            document.getElementById('vch-confirm').style.display = (!myVoted && selectedVoteChamTarget) ? '' : 'none';
+            const grid = document.getElementById('vote-grid');
+            grid.innerHTML = '';
+
+            const vStr = currentLang === 'pt' ? 'votou' : (currentLang === 'en' ? 'voted' : 'votó');
+            const youStr = currentLang === 'pt' ? 'você' : (currentLang === 'en' ? 'you' : 'tú');
+
+            s.players.forEach(p => {
+                const isSelf = p.id === myId;
+                const isSelected = selectedVoteChamTarget === p.id;
+                const div = document.createElement('div');
+                div.className = 'vote-player-card' + (isSelf ? ' self' : '') + (isSelected ? ' sel' : '') + (myVoted ? ' voted' : '');
+                if (!isSelf && !myVoted) div.onclick = () => selectVoteCham(p.id, s);
+                div.innerHTML = `<div class="vpc-emoji">${p.emoji}</div>
+      <div class="vpc-name">${esc(p.name)}</div>
+      ${p.votedCham ? `<div class="vpc-voted">✓ ${vStr}</div>` : ''}
+      ${isSelf ? `<div class="vpc-voted">${youStr}</div>` : ''}`;
+                grid.appendChild(div);
+            });
+        }
+
+        function selectVoteCham(id, s) {
+            if (s.players.find(p => p.id === myId)?.votedCham) return;
+            selectedVoteChamTarget = id;
+            renderVoteCham(s);
+            document.getElementById('vch-confirm').style.display = '';
+        }
+
+        // ── Results ─────────────────────────────────────────────────
+        let countdownInterval = null;
+
+        function renderResults(s) {
+            show('s-results');
+            stopTimer();
+            if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+
+            const r = s.result;
+            const isCaught = r?.type === 'caught';
+            const isTie = r?.type === 'tie';
+
+            document.getElementById('res-icon').textContent = isCaught ? '🎉' : isTie ? '🤝' : '🦎';
+            document.getElementById('res-title').textContent =
+                isCaught ? t('res-caught') : isTie ? t('res-tie') : t('res-escaped');
+
+            const cam = s.players.find(p => p.id === s.camId);
+            document.getElementById('res-sub').textContent =
+                isCaught ? `${cam?.emoji || ''} ${cam?.name || ''} ${t('res-was-cam')}` :
+                    isTie ? t('res-tie-sub') :
+                        `${cam?.emoji || ''} ${cam?.name || ''} ${t('res-fooled')}`;
+
+            document.getElementById('res-normal-word').textContent = s.pair?.normal || '?';
+            document.getElementById('res-cam-word').textContent = s.pair?.cam || '?';
+
+            // Score label
+            const cfg = s.config || {};
+            const lbl = cfg.gameEndMode === 'points'
+                ? `${t('res-score')} (${t('target')}: ${cfg.targetScore} ${t('pts')})`
+                : `${t('hint-round')} ${s.gamesPlayed} ${t('of')} ${cfg.maxRounds}`;
+            document.getElementById('res-score-label').textContent = lbl;
+
+            // Score table (sorted)
+            const sorted = [...s.players].sort((a, b) => b.score - a.score);
+            const tbody = document.getElementById('res-scores');
+            tbody.innerHTML = '';
+            sorted.forEach((p, i) => {
+                const isCamRow = p.id === s.camId;
+                const tr = document.createElement('tr');
+                if (isCamRow) tr.className = 'highlight-row';
+                const ptsStr = p.score !== 1 ? (currentLang === 'en' ? 'pts' : 'pts') : 'pt';
+                tr.innerHTML = `<td>${i + 1}. ${p.emoji} ${esc(p.name)}${isCamRow ? '<span class="cam-mark">🦎</span>' : ''}</td>
+                  <td>${p.score} ${ptsStr}</td>`;
+                tbody.appendChild(tr);
+            });
+
+            // ── Mid-round: countdown to next round ──
+            const nextBar = document.getElementById('res-next-round-bar');
+            const podiumSec = document.getElementById('res-podium-section');
+
+            if (!s.matchOver && s.nextRoundIn) {
+                podiumSec.style.display = 'none';
+                nextBar.style.display = '';
+                const cdEl = document.getElementById('res-countdown');
+                function tickCd() {
+                    const rem = Math.max(0, Math.ceil((s.nextRoundIn - Date.now()) / 1000));
+                    cdEl.textContent = rem;
+                    if (rem <= 0) { clearInterval(countdownInterval); countdownInterval = null; }
+                }
+                tickCd();
+                countdownInterval = setInterval(tickCd, 500);
+            } else {
+                nextBar.style.display = 'none';
+            }
+
+            // ── Final podium (matchOver) ──
+            if (s.matchOver) {
+                podiumSec.style.display = '';
+                buildPodium(sorted);
+            } else {
+                podiumSec.style.display = 'none';
+            }
+
+            // ── Host actions (only on final podium) ──
+            const isHost = myId === s.hostId;
+            document.getElementById('res-host-area').style.display = (isHost && s.matchOver) ? '' : 'none';
+            document.getElementById('res-wait-area').style.display = (!isHost && s.matchOver) ? '' : 'none';
+        }
+
+        function buildPodium(sorted) {
+            // sorted = players ordered by score desc
+            const top = sorted.slice(0, 3);
+            const rest = sorted.slice(3);
+            const medals = ['🥇', '🥈', '🥉'];
+            const podiumOrder = [1, 0, 2]; // display: 2nd, 1st, 3rd
+
+            const podiumEl = document.getElementById('res-podium');
+            podiumEl.innerHTML = '';
+            podiumOrder.forEach(idx => {
+                const p = top[idx];
+                if (!p) return;
+                const pos = idx + 1;
+                const slot = document.createElement('div');
+                slot.className = `podium-slot podium-${pos}`;
+                slot.innerHTML = `
+                  ${pos === 1 ? '<div class="podium-crown">👑</div>' : ''}
+                  <div class="podium-emoji">${p.emoji}</div>
+                  <div class="podium-name">${esc(p.name)}</div>
+                  <div class="podium-score">${p.score} pt${p.score !== 1 ? 's' : ''}</div>
+                  <div class="podium-block">${medals[idx]}</div>
+                `;
+                podiumEl.appendChild(slot);
+            });
+
+            const othersEl = document.getElementById('res-others');
+            othersEl.innerHTML = '';
+            rest.forEach((p, i) => {
+                const row = document.createElement('div');
+                row.className = 'other-score-row';
+                row.innerHTML = `
+                  <span class="other-pos">${i + 4}.</span>
+                  <span style="font-size:1.1rem">${p.emoji}</span>
+                  <span class="other-name">${esc(p.name)}</span>
+                  <span class="other-pts">${p.score} pt${p.score !== 1 ? 's' : ''}</span>
+                `;
+                othersEl.appendChild(row);
+            });
+        }
+
+        // ── Timer ─────────────────────────────────────────────────
+        function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+
+        function startTimerBar(barId, txtId, timerEnd, totalSeconds) {
+            stopTimer();
+            const bar = document.getElementById(barId);
+            const txt = document.getElementById(txtId);
+            if (!timerEnd || !bar) return;
+
+            function tick() {
+                const rem = Math.max(0, timerEnd - Date.now());
+                const pct = (rem / (totalSeconds * 1000)) * 100;
+                bar.style.width = pct + '%';
+                bar.className = 'timer-bar' + (pct < 30 ? ' warn' : '') + (pct < 10 ? ' danger' : '');
+                const secs = Math.ceil(rem / 1000);
+                if (txt) txt.textContent = secs + 's';
+                if (rem <= 0) { stopTimer(); if (txt) txt.textContent = '0s'; }
+            }
+            tick();
+            timerInterval = setInterval(tick, 200);
+        }
+
+        // ── Toast ─────────────────────────────────────────────────
+        let toastT;
+        function toast(msg, type = '') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'show ' + (type || '');
+            clearTimeout(toastT);
+            toastT = setTimeout(() => el.className = '', 3000);
+        }
+
+        // ── Utils ─────────────────────────────────────────────────
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    </script>
+</body>
+
+</html>
