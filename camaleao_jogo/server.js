@@ -9,6 +9,8 @@ const httpSv = http.createServer(app);
 const io = new Server(httpSv);
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/camaleao_jogo/public', express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../index.html')));
 
 // ── Word bank ─────────────────────────────────────────────────
 const { loadWords, ALL_CATS } = require('./words/words');
