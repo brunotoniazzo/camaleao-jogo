@@ -1,0 +1,34 @@
+# --- Dependências e Pacotes ---
+# Evita que a IA tente ler milhares de arquivos de bibliotecas
+node_modules/
+**/node_modules/
+
+# --- Arquivos de Bloqueio (Lock files) ---
+# O package.json já diz o que a IA precisa saber; o lock é muito extenso
+package-lock.json
+yarn.lock
+
+# --- Logs e Arquivos de Sistema ---
+*.log
+.DS_Store
+Thumbs.db
+
+# --- Configurações de IDE ---
+.vscode/
+.idea/
+
+# --- Segurança (Boas práticas) ---
+.env
+.env.*
+
+# --- Arquivos de Build e Distribuição ---
+# Ignora arquivos gerados automaticamente que não são necessários para o desenvolvimento
+dist/
+build/
+*.log
+*.lock
+*.tmp
+*.cache
+
+# --- Arquivos de IA ---
+.geminiignore
