@@ -1,1 +1,3 @@
-# A pasta design_system foi ignorada no .gitignore da raiz do projeto (d:\vibecode\camaleao\.gitignore)
+design_system.css
+design_system.html
+**/node_modules/
